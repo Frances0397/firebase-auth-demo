@@ -9,7 +9,12 @@ import { useTheme } from '@react-navigation/native';
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { GoogleSignIn } from 'expo-google-app-auth';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
+import {
+  EXPO_PUBLIC_API_KEY, EXPO_PUBLIC_AUTH_DOMAIN, EXPO_PUBLIC_PROJECT_ID, EXPO_PUBLIC_STORAGE_BUCKET,
+  EXPO_PUBLIC_MESSAGING_SENDER_ID, EXPO_PUBLIC_APP_ID, EXPO_PUBLIC_MEASUREMENT_ID
+} from '@env';
 
 // import { ThemeContext } from '../App';
 import LoginButtonsGroup from './fragments/loginButtons';
@@ -21,16 +26,17 @@ export default function App({ navigation }) {
   const colors = useTheme().colors;
 
   //Firebase shit
-  console.log(process.env.REACT_APP_API_KEY);
+  console.log(process.env.EXPO_PUBLIC_API_KEY);
+  console.log(EXPO_PUBLIC_API_KEY);
 
   const firebaseConfig = {
-    apiKey: process.env.API_KEY,
-    authDomain: process.env.AUTH_DOMAIN,
-    projectId: process.env.PROJECT_ID,
-    storageBucket: process.env.STORAGE_BUCKET,
-    messagingSenderId: process.env.MESSAGING_SENDER_ID,
-    appId: process.env.APP_ID,
-    measurementId: process.env.MEASUREMENT_ID
+    apiKey: process.env.EXPO_PUBLIC_API_KEY,
+    authDomain: process.env.EXPO_PUBLIC_AUTH_DOMAIN,
+    projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
+    storageBucket: process.env.EXPO_PUBLIC_STORAGE_BUCKET,
+    messagingSenderId: process.env.EXPO_PUBLIC_MESSAGING_SENDER_ID,
+    appId: process.env.EXPO_PUBLIC_APP_ID,
+    measurementId: process.env.EXPO_PUBLIC_MEASUREMENT_ID
   };
 
 
@@ -74,23 +80,22 @@ export default function App({ navigation }) {
   };
 
   const signInWithGoogleAsync = async () => {
-    try {
-      const result = await GoogleSignIn.logInAsync({
-        androidClientId: null, // Set to null for web
-        iosClientId: null, // Set to null for web
-        webClientId: 'YOUR_WEB_CLIENT_ID', // Add your web client ID here
-        scopes: ['profile', 'email'],
-      });
+    GoogleSignIn.configure({ webClientId: '330176057310-js3s64dl789cug5rmnmje0af03fu9nuo.apps.googleusercontent.com' });
 
-      if (result.type === 'success') {
-        console.log('Google Sign-In successful:', result.user);
-        // You can now use the result.user object or perform Firebase authentication
-      } else {
-        console.log('Google Sign-In canceled or failed:', result);
-      }
-    } catch (error) {
-      console.error('Error during Google Sign-In:', error);
-    }
+    // Get the users ID token
+    const { idToken } = await GoogleSignin.signIn();
+
+    // Create a Google credential with the token
+    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
+    // Sign-in the user with the credential
+    const user_sign_in = auth().signInWithCredential(googleCredential);
+    user_sign_in.then((user) => {
+      console.log(user);
+    })
+      .catch((error) => {
+        console.log(error);
+      })
   };
 
   // const { theme, setTheme } = React.useContext(ThemeContext)
