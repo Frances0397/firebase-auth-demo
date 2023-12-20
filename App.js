@@ -4,12 +4,12 @@ import { ListItem, Avatar } from 'react-native-elements';
 import { Input, Switch } from '@rneui/themed';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@react-navigation/native';
+import { Button } from 'react-native-paper';
 
 //Firebase shit
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 import {
   EXPO_PUBLIC_API_KEY, EXPO_PUBLIC_AUTH_DOMAIN, EXPO_PUBLIC_PROJECT_ID, EXPO_PUBLIC_STORAGE_BUCKET,
@@ -18,12 +18,14 @@ import {
 
 // import { ThemeContext } from '../App';
 import LoginButtonsGroup from './fragments/loginButtons';
+import UserDialog from './fragments/userDetails';
 
 export default function App({ navigation }) {
   const { width, height } = useWindowDimensions()
   const [isRevealPwd, setIsRevealPwd] = useState(false);
   const [toggle, setToggle] = useState(false);
   const colors = useTheme().colors;
+  const [visible, setVisible] = useState(false);
 
   //Firebase shit
   console.log(process.env.EXPO_PUBLIC_API_KEY);
@@ -42,7 +44,7 @@ export default function App({ navigation }) {
 
   initializeApp(firebaseConfig);
   const auth = getAuth();
-
+  const provider = new GoogleAuthProvider();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,22 +82,28 @@ export default function App({ navigation }) {
   };
 
   const signInWithGoogleAsync = async () => {
-    GoogleSignIn.configure({ webClientId: '330176057310-js3s64dl789cug5rmnmje0af03fu9nuo.apps.googleusercontent.com' });
-
-    // Get the users ID token
-    const { idToken } = await GoogleSignin.signIn();
-
-    // Create a Google credential with the token
-    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-
-    // Sign-in the user with the credential
-    const user_sign_in = auth().signInWithCredential(googleCredential);
-    user_sign_in.then((user) => {
-      console.log(user);
-    })
-      .catch((error) => {
-        console.log(error);
-      })
+    console.log("Signing in using Google");
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        // This gives you a Google Access Token. You can use it to access the Google API.
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential.accessToken;
+        // The signed-in user info.
+        const user = result.user;
+        // IdP data available using getAdditionalUserInfo(result)
+        // ...
+        console.log("login successful");
+      }).catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.error(errorCode + " " + errorMessage);
+        // The email of the user's account used.
+        const email = error.customData.email;
+        // The AuthCredential type that was used.
+        const credential = GoogleAuthProvider.credentialFromError(error);
+        // ...
+      });
   };
 
   // const { theme, setTheme } = React.useContext(ThemeContext)
@@ -108,8 +116,18 @@ export default function App({ navigation }) {
   //     setTheme('light');
   //   }
   // }
+
+  //USER DETAILS HANDLING
+  const showDialog = () => setVisible(true);
+
+  const openDialog = () => {
+    console.log("New task dialog");
+    showDialog();
+  }
+
   return (
     <View style={{ flexDirection: 'row', height: '100%', flex: 1 }}>
+      <UserDialog openDialog={openDialog} visible={visible} setVisible={setVisible} />
       <View style={styles.cont1}>
         <ListItem containerStyle={styles.avatar}>
           <Avatar
@@ -151,6 +169,7 @@ export default function App({ navigation }) {
                   () => setIsRevealPwd(true)} />}
           />
           <LoginButtonsGroup handleLogon={handleLogon} handleGoogleSignIn={signInWithGoogleAsync} />
+          <Button icon="cog" mode="contained-tonal" onPress={openDialog}>User settings</Button>
         </View>
         <View style={{ flexDirection: 'row' }}>
           {/* <Switch
