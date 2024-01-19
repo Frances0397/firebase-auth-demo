@@ -1,14 +1,14 @@
 import React, { Children, useState } from 'react';
-import { StyleSheet, Text, View, Image, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, Image, useWindowDimensions, TouchableOpacity } from 'react-native';
 import { ListItem, Avatar } from 'react-native-elements';
 import { Input, Switch } from '@rneui/themed';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '@react-navigation/native';
-import { Button, PaperProvider } from 'react-native-paper';
+import { Button, Provider, PaperProvider } from 'react-native-paper';
 
 //Firebase shit
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from "firebase/auth";
 import { signInWithEmailAndPassword } from "firebase/auth";
 
 import {
@@ -106,6 +106,16 @@ export default function App({ navigation }) {
       });
   };
 
+  const handleResetPassword = () => {
+    console.log("Password reset");
+    try {
+      sendPasswordResetEmail(auth, email);
+      alert("Mail per il reset password inviata!");
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   // const { theme, setTheme } = React.useContext(ThemeContext)
   // const changeTheme = () => {
   //   if (theme === 'light') {
@@ -127,57 +137,61 @@ export default function App({ navigation }) {
     showDialog();
   }
 
-  const closeDialog = () => setVisible(false);
+  console.log("parent");
+  console.log(visible);
 
   return (
     <PaperProvider>
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', height: '100%', flex: 1 }}>
-          <View style={styles.cont1}>
-            <ListItem containerStyle={styles.avatar}>
-              <Avatar
-                size={40}
-                rounded
-                source={{ uri: require("./assets/favicon.png") }} />
-              <ListItem.Content>
-                <ListItem.Title style={{ fontSize: 20, color: colors.text }}>Task Master</ListItem.Title>
-              </ListItem.Content>
-            </ListItem>
-            <Text style={{
-              fontSize: 35,
-              marginTop: '15%',
-              marginLeft: '20%',
-              color: colors.text
-            }}>Welcome Back</Text>
-            <Text style={{
-              marginTop: '3%',
-              marginLeft: '21%',
-              color: colors.text
-            }}>We are happy to have you back!</Text>
-            <View style={styles.cont2}>
-              <Input
-                style={{ color: colors.text }}
-                placeholder='Email'
-                onChangeText={setEmail} />
-              <Input
-                style={{ color: colors.text }}
-                secureTextEntry={isRevealPwd ? false : true}
-                placeholder='Password'
-                onChangeText={setPassword}
-                rightIcon={
-                  <Ionicons
-                    name={isRevealPwd ? 'eye-off' : 'eye'}
-                    size={20}
-                    style={{ paddingLeft: 7, color: colors.text }}
-                    onPress={isRevealPwd ?
-                      () => setIsRevealPwd(false) :
-                      () => setIsRevealPwd(true)} />}
-              />
-              {/* <LoginButtonsGroup handleLogon={handleLogon} handleGoogleSignIn={signInWithGoogleAsync} /> */}
-              <Button icon="cog" mode="contained-tonal" onPress={openDialog}>User settings</Button>
-            </View>
-            <View style={{ flexDirection: 'row' }}>
-              {/* <Switch
+      <View style={{ flexDirection: 'row', height: '100%', flex: 1 }}>
+        <UserDialog visible={visible} setVisible={setVisible} />
+        <View style={styles.cont1}>
+          <ListItem containerStyle={styles.avatar}>
+            <Avatar
+              size={40}
+              rounded
+              source={{ uri: require("./assets/favicon.png") }} />
+            <ListItem.Content>
+              <ListItem.Title style={{ fontSize: 20, color: colors.text }}>Task Master</ListItem.Title>
+            </ListItem.Content>
+          </ListItem>
+          <Text style={{
+            fontSize: 35,
+            marginTop: '15%',
+            marginLeft: '20%',
+            color: colors.text
+          }}>Welcome Back</Text>
+          <Text style={{
+            marginTop: '3%',
+            marginLeft: '21%',
+            color: colors.text
+          }}>We are happy to have you back!</Text>
+          <View style={styles.cont2}>
+            <Input
+              style={{ color: colors.text }}
+              placeholder='Email'
+              onChangeText={setEmail} />
+            <Input
+              style={{ color: colors.text }}
+              secureTextEntry={isRevealPwd ? false : true}
+              placeholder='Password'
+              onChangeText={setPassword}
+              rightIcon={
+                <Ionicons
+                  name={isRevealPwd ? 'eye-off' : 'eye'}
+                  size={20}
+                  style={{ paddingLeft: 7, color: colors.text }}
+                  onPress={isRevealPwd ?
+                    () => setIsRevealPwd(false) :
+                    () => setIsRevealPwd(true)} />}
+            />
+            <LoginButtonsGroup handleLogon={handleLogon} handleGoogleSignIn={signInWithGoogleAsync} />
+            {/* <Button icon="plus" mode="contained-tonal" onPress={openDialog}>Sign up</Button> */}
+            <TouchableOpacity onPress={handleResetPassword}>
+              <Text style={{ color: 'blue', textDecorationLine: 'underline' }}>reset password</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ flexDirection: 'row' }}>
+            {/* <Switch
             style={{
               marginLeft: '18%',
               marginBottom: '5%',
@@ -185,24 +199,23 @@ export default function App({ navigation }) {
             }}
             onValueChange={changeTheme}
             value={toggle} /> */}
-              <Text
-                style={{ color: colors.text, marginLeft: 10 }}
-              >{toggle ? 'Light Mode' : 'Dark Mode'}</Text>
-            </View>
-          </View>
-          <View style={{ alignSelf: 'center', flex: 1, height: height / 1.1, marginRight: '1%' }}>
-            <Image source={require('./assets/Frame.png')} style={{
-              alignSelf: 'center',
-              height: '90%',
-              width: '60%',
-              resizeMode: 'stretch',
-              flex: 1
-            }} />
+            <Text
+              style={{ color: colors.text, marginLeft: 10 }}
+            >{toggle ? 'Light Mode' : 'Dark Mode'}</Text>
           </View>
         </View>
-        <UserDialog openDialog={openDialog} visible={visible} closeDialog={closeDialog} />
+        <View style={{ alignSelf: 'center', flex: 2, height: height / 1.1, marginRight: '1%', zIndex: 0, }}>
+          <Image source={require('./assets/Frame.png')} style={{
+            alignSelf: 'center',
+            height: '90%',
+            width: '60%',
+            resizeMode: 'stretch',
+            flex: 1,
+            zIndex: 0,
+          }} />
+        </View>
       </View>
-    </PaperProvider >
+    </PaperProvider>
   );
 }
 
